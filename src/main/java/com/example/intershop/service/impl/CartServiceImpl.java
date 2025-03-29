@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
-@SessionScope
 public class CartServiceImpl implements CartService {
 
     private final ItemRepository itemRepository;

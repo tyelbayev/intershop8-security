@@ -2,33 +2,37 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 
 <head>
-    <title>Заказы</title>
+    <title>Список заказов</title>
 </head>
 
 <body>
-<a href="/cart/items" style="float:right;">
-    <b>КОРЗИНА &cudarrr;</b>
-</a>
+
 <a href="/main/items" style="float:right;">
     <b>ГЛАВНАЯ &cudarrr;</b>
 </a>
-<table style="width:70%;margin-left:auto;margin-right:auto;">
+
+<h1 style="text-align:center;">Ваши заказы</h1>
+
+<div th:if="${orders.isEmpty()}">
+    <p style="text-align:center;">У вас пока нет заказов.</p>
+</div>
+
+<table th:if="${!orders.isEmpty()}" style="width:70%;margin:auto;">
     <tr th:each="order : ${orders}">
         <td>
-            <h2>
-                <a th:text="${'Заказ №'+order.id()}" th:href="${'/orders/'+order.id()}"></a>
-            </h2>
-            <table>
-                <tr th:each="item : ${order.items()}">
-                    <td th:text="${item.getTitle()+' ('+item.getCount()+' шт.) '+(item.getPrice()*item.getCount())+' руб.'}"></td>
-                </tr>
-            </table>
-            <p>
-                <b th:text="${'Сумма: '+order.totalSum()}+' руб.'"></b>
-            </p>
+            <div style="border:1px solid gray; padding:10px; margin:10px;">
+                <h3 th:text="'Заказ #' + ${order.id}"></h3>
+                <ul>
+                    <li th:each="orderItem : ${order.items}">
+                        <span th:text="${orderItem.item.title}"></span> —
+                        <span th:text="${orderItem.quantity}"></span> шт.
+                    </li>
+                </ul>
+                <a th:href="@{'/orders/' + ${order.id}}">Открыть заказ</a>
+            </div>
         </td>
     </tr>
 </table>
-</body>
 
+</body>
 </html>

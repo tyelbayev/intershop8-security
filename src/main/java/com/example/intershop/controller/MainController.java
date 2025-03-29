@@ -38,12 +38,10 @@ public class MainController {
         model.addAttribute("items", itemsGrid);
         model.addAttribute("search", search);
         model.addAttribute("sort", sort);
-        model.addAttribute("paging", Map.of(
-                "pageNumber", pageNumber,
-                "pageSize", pageSize,
-                "hasNext", page.hasNext(),
-                "hasPrevious", page.hasPrevious()
-        ));
+        model.addAttribute("pageSize", pageSize);
+        model.addAttribute("pageNumber", pageNumber);
+        model.addAttribute("hasNext", page.hasNext());
+        model.addAttribute("hasPrevious", page.hasPrevious());
 
         return "main";
     }
