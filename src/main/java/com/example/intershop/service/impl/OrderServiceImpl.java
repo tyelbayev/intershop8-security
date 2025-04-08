@@ -7,10 +7,11 @@ import com.example.intershop.repository.OrderRepository;
 import com.example.intershop.service.OrderService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
-import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
-import java.util.Optional;
 
 @Service
 public class OrderServiceImpl implements OrderService {
@@ -23,25 +24,28 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public Order placeOrder(Map<Item, Integer> items) {
+    public Mono<Order> placeOrder(Map<Item, Integer> items) {
         Order order = new Order();
-        for (Map.Entry<Item, Integer> entry : items.entrySet()) {
-            OrderItem oi = new OrderItem();
-            oi.setOrder(order);
-            oi.setItem(entry.getKey());
-            oi.setQuantity(entry.getValue());
-            order.getItems().add(oi);
-        }
+        order.setItems(new ArrayList<>());
+
+        items.forEach((item, quantity) -> {
+            OrderItem orderItem = new OrderItem();
+            orderItem.setOrder(order);
+            orderItem.setItem(item);
+            orderItem.setQuantity(quantity);
+            order.getItems().add(orderItem);
+        });
+
         return orderRepository.save(order);
     }
 
     @Override
-    public List<Order> getAllOrders() {
+    public Flux<Order> getAllOrders() {
         return orderRepository.findAll();
     }
 
     @Override
-    public Optional<Order> getOrderById(Long id) {
+    public Mono<Order> getOrderById(Long id) {
         return orderRepository.findById(id);
     }
 }

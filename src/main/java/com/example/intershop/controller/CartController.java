@@ -1,12 +1,14 @@
 package com.example.intershop.controller;
 
-import com.example.intershop.model.Item;
 import com.example.intershop.service.CartService;
+import com.example.intershop.service.CartService.ItemWithQuantity;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.reactive.result.view.Rendering;
+import reactor.core.publisher.Mono;
 
-import java.util.Map;
+import java.math.BigDecimal;
+import java.util.List;
 
 @Controller
 @RequestMapping("/cart/items")
@@ -19,22 +21,26 @@ public class CartController {
     }
 
     @GetMapping
-    public String getCart(Model model) {
-        Map<Item, Integer> items = cartService.getItems();
-        model.addAttribute("items", items);
-        model.addAttribute("total", cartService.getTotal());
-        model.addAttribute("empty", cartService.isEmpty());
-        return "cart";
+    public Mono<Rendering> getCart() {
+        Mono<List<ItemWithQuantity>> itemsMono = cartService.getItems().collectList();
+        Mono<BigDecimal> totalMono = cartService.getTotal();
+        Mono<Boolean> emptyMono = cartService.isEmpty();
+
+        return Mono.zip(itemsMono, totalMono, emptyMono)
+                .map(tuple -> Rendering.view("cart")
+                        .modelAttribute("items", tuple.getT1())
+                        .modelAttribute("total", tuple.getT2())
+                        .modelAttribute("empty", tuple.getT3())
+                        .build());
     }
 
     @PostMapping("/{id}")
-    public String updateCart(@PathVariable Long id, @RequestParam String action) {
-        switch (action) {
-            case "PLUS" -> cartService.addItem(id);
-            case "MINUS" -> cartService.removeItem(id);
-            case "DELETE" -> cartService.deleteItem(id);
-        }
-        return "redirect:/cart/items";
+    public Mono<String> updateCart(@PathVariable Long id, @RequestParam String action) {
+        return switch (action) {
+            case "PLUS" -> cartService.addItem(id).thenReturn("redirect:/cart/items");
+            case "MINUS" -> cartService.removeItem(id).thenReturn("redirect:/cart/items");
+            case "DELETE" -> cartService.deleteItem(id).thenReturn("redirect:/cart/items");
+            default -> Mono.just("redirect:/cart/items");
+        };
     }
 }
-

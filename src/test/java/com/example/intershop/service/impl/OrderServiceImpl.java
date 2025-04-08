@@ -3,35 +3,34 @@ package com.example.intershop.service.impl;
 import com.example.intershop.model.Item;
 import com.example.intershop.model.Order;
 import com.example.intershop.repository.OrderRepository;
+import com.example.intershop.service.OrderService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class OrderServiceImplTest {
 
-    @Mock
     private OrderRepository orderRepository;
-
-    private OrderServiceImpl orderService;
+    private OrderService orderService;
 
     private Item item;
 
     @BeforeEach
     void setUp() {
+        orderRepository = mock(OrderRepository.class);
         orderService = new OrderServiceImpl(orderRepository);
 
         item = new Item();
@@ -48,47 +47,44 @@ class OrderServiceImplTest {
 
         Order savedOrder = new Order();
         savedOrder.setId(42L);
-        Mockito.when(orderRepository.save(any(Order.class))).thenReturn(savedOrder);
+        when(orderRepository.save(any(Order.class))).thenReturn(Mono.just(savedOrder));
 
-        Order result = orderService.placeOrder(cart);
+        StepVerifier.create(orderService.placeOrder(cart))
+                .expectNextMatches(order -> order.getId().equals(42L))
+                .verifyComplete();
 
-        Mockito.verify(orderRepository).save(captor.capture());
+        verify(orderRepository).save(captor.capture());
         Order captured = captor.getValue();
-
         assertEquals(1, captured.getItems().size());
-        assertEquals(42L, result.getId());
     }
 
     @Test
-    void getAllOrders_shouldReturnListOfOrders() {
+    void getAllOrders_shouldReturnOrders() {
         Order order = new Order();
         order.setId(1L);
-        Mockito.when(orderRepository.findAll()).thenReturn(List.of(order));
+        when(orderRepository.findAll()).thenReturn(Flux.just(order));
 
-        List<Order> result = orderService.getAllOrders();
-
-        assertEquals(1, result.size());
-        assertEquals(1L, result.get(0).getId());
+        StepVerifier.create(orderService.getAllOrders())
+                .expectNextMatches(o -> o.getId().equals(1L))
+                .verifyComplete();
     }
 
     @Test
-    void getOrderById_shouldReturnCorrectOrder() {
+    void getOrderById_shouldReturnOrder() {
         Order order = new Order();
         order.setId(99L);
-        Mockito.when(orderRepository.findById(99L)).thenReturn(Optional.of(order));
+        when(orderRepository.findById(99L)).thenReturn(Mono.just(order));
 
-        Optional<Order> result = orderService.getOrderById(99L);
-
-        assertTrue(result.isPresent());
-        assertEquals(99L, result.get().getId());
+        StepVerifier.create(orderService.getOrderById(99L))
+                .expectNextMatches(o -> o.getId().equals(99L))
+                .verifyComplete();
     }
 
     @Test
-    void getOrderById_shouldReturnEmptyIfNotFound() {
-        Mockito.when(orderRepository.findById(123L)).thenReturn(Optional.empty());
+    void getOrderById_shouldReturnEmpty() {
+        when(orderRepository.findById(123L)).thenReturn(Mono.empty());
 
-        Optional<Order> result = orderService.getOrderById(123L);
-
-        assertTrue(result.isEmpty());
+        StepVerifier.create(orderService.getOrderById(123L))
+                .verifyComplete();
     }
 }

@@ -5,13 +5,15 @@ import com.example.intershop.repository.ItemRepository;
 import com.example.intershop.service.CartService;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.annotation.SessionScope;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
+@SessionScope
 public class CartServiceImpl implements CartService {
 
     private final ItemRepository itemRepository;
@@ -22,41 +24,47 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public void addItem(Long itemId) {
+    public Mono<Void> addItem(Long itemId) {
         cart.merge(itemId, 1, Integer::sum);
+        return Mono.empty();
     }
 
     @Override
-    public void removeItem(Long itemId) {
+    public Mono<Void> removeItem(Long itemId) {
         cart.computeIfPresent(itemId, (id, count) -> (count > 1) ? count - 1 : null);
+        return Mono.empty();
     }
 
     @Override
-    public void deleteItem(Long itemId) {
+    public Mono<Void> deleteItem(Long itemId) {
         cart.remove(itemId);
+        return Mono.empty();
     }
 
     @Override
-    public Map<Item, Integer> getItems() {
-        return cart.entrySet().stream()
-                .map(entry -> Map.entry(itemRepository.findById(entry.getKey()).orElseThrow(), entry.getValue()))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    public Flux<ItemWithQuantity> getItems() {
+        return Flux.fromIterable(cart.entrySet())
+                .flatMap(entry ->
+                        itemRepository.findById(entry.getKey())
+                                .map(item -> new ItemWithQuantity(item, entry.getValue()))
+                );
     }
 
     @Override
-    public BigDecimal getTotal() {
-        return getItems().entrySet().stream()
-                .map(e -> e.getKey().getPrice().multiply(BigDecimal.valueOf(e.getValue())))
+    public Mono<BigDecimal> getTotal() {
+        return getItems()
+                .map(iq -> iq.item().getPrice().multiply(BigDecimal.valueOf(iq.quantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     @Override
-    public boolean isEmpty() {
-        return cart.isEmpty();
+    public Mono<Boolean> isEmpty() {
+        return Mono.just(cart.isEmpty());
     }
 
     @Override
-    public void clear() {
+    public Mono<Void> clear() {
         cart.clear();
+        return Mono.empty();
     }
 }

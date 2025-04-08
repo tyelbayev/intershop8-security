@@ -2,6 +2,7 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 
 <head>
+    <meta charset="UTF-8">
     <title>Список заказов</title>
 </head>
 
@@ -13,11 +14,11 @@
 
 <h1 style="text-align:center;">Ваши заказы</h1>
 
-<div th:if="${orders.isEmpty()}">
+<div th:if="${#lists.isEmpty(orders)}">
     <p style="text-align:center;">У вас пока нет заказов.</p>
 </div>
 
-<table th:if="${!orders.isEmpty()}" style="width:70%;margin:auto;">
+<table th:if="${!#lists.isEmpty(orders)}" style="width:70%;margin:auto;">
     <tr th:each="order : ${orders}">
         <td>
             <div style="border:1px solid gray; padding:10px; margin:10px;">

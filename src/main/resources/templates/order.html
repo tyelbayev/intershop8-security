@@ -2,6 +2,7 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 
 <head>
+    <meta charset="UTF-8">
     <title>Заказ</title>
 </head>
 
@@ -25,25 +26,25 @@
         </td>
     </tr>
 
-    <tr th:each="item : ${order.items}">
+    <tr th:each="oi : ${order.items}">
         <td>
             <table>
                 <tr>
                     <td>
-                        <a th:href="@{'/items/' + ${item.id}}">
-                            <img width="300" height="300" th:src="@{${item.imgPath}}">
+                        <a th:href="@{'/items/' + ${oi.item.id}}">
+                            <img width="300" height="300" th:src="@{${oi.item.imgPath}}">
                         </a>
                     </td>
                 </tr>
                 <tr>
                     <td>
-                        <b th:text="${item.title}"></b>
+                        <b th:text="${oi.item.title}"></b>
                     </td>
                     <td>
-                        <b th:text="${item.count} + ' шт.'"></b>
+                        <b th:text="${oi.quantity} + ' шт.'"></b>
                     </td>
                     <td>
-                        <b th:text="${item.price * item.count} + ' тг.'"></b>
+                        <b th:text="${oi.item.price * oi.quantity} + ' тг.'"></b>
                     </td>
                 </tr>
             </table>

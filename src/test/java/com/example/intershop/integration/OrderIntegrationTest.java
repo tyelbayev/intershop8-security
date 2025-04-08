@@ -12,6 +12,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import java.math.BigDecimal;
+import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -39,9 +40,8 @@ class OrderIntegrationTest {
         item.setPrice(BigDecimal.valueOf(1500));
         item.setCount(3);
         item.setImgPath("/img/laptop.jpg");
-        itemId = itemRepository.save(item).getId();
+        itemId = Objects.requireNonNull(itemRepository.save(item).block()).getId();
 
-        // Положить в корзину
         mockMvc.perform(post("/cart/items/" + itemId).param("action", "PLUS"));
     }
 

@@ -1,22 +1,25 @@
 package com.example.intershop.model;
 
-import jakarta.persistence.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
+import org.springframework.data.relational.core.mapping.Table;
 
-@Entity
-@Table(name = "order_items")
+@Table("order_items")
 public class OrderItem {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    private Order order;
-
-    @ManyToOne
-    private Item item;
+    private Long orderId;
+    private Long itemId;
 
     private int quantity;
+
+    @Transient
+    private Item item;
+
+    @Transient
+    private Order order;
 
     public Long getId() {
         return id;
@@ -26,20 +29,20 @@ public class OrderItem {
         this.id = id;
     }
 
-    public Order getOrder() {
-        return order;
+    public Long getOrderId() {
+        return orderId;
     }
 
-    public void setOrder(Order order) {
-        this.order = order;
+    public void setOrderId(Long orderId) {
+        this.orderId = orderId;
     }
 
-    public Item getItem() {
-        return item;
+    public Long getItemId() {
+        return itemId;
     }
 
-    public void setItem(Item item) {
-        this.item = item;
+    public void setItemId(Long itemId) {
+        this.itemId = itemId;
     }
 
     public int getQuantity() {
@@ -48,5 +51,15 @@ public class OrderItem {
 
     public void setQuantity(int quantity) {
         this.quantity = quantity;
+    }
+
+    public void setItem(Item item) {
+        this.item = item;
+        this.itemId = item.getId(); // сохраняем ID отдельно
+    }
+
+    public void setOrder(Order order) {
+        this.order = order;
+        this.orderId = order.getId(); // аналогично
     }
 }

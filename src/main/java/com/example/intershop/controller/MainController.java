@@ -3,14 +3,14 @@ package com.example.intershop.controller;
 import com.example.intershop.model.Item;
 import com.example.intershop.service.CartService;
 import com.example.intershop.service.CatalogService;
-import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.reactive.result.view.Rendering;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @Controller
 @RequestMapping("/main/items")
@@ -25,39 +25,36 @@ public class MainController {
     }
 
     @GetMapping
-    public String getItems(
+    public Mono<Rendering> getItems(
             @RequestParam(defaultValue = "") String search,
             @RequestParam(defaultValue = "NO") String sort,
             @RequestParam(defaultValue = "10") int pageSize,
-            @RequestParam(defaultValue = "1") int pageNumber,
-            Model model
+            @RequestParam(defaultValue = "1") int pageNumber
     ) {
-        Page<Item> page = catalogService.getItems(search, sort, pageNumber, pageSize);
-        List<List<Item>> itemsGrid = splitToGrid(page.getContent(), 3);
-
-        model.addAttribute("items", itemsGrid);
-        model.addAttribute("search", search);
-        model.addAttribute("sort", sort);
-        model.addAttribute("pageSize", pageSize);
-        model.addAttribute("pageNumber", pageNumber);
-        model.addAttribute("hasNext", page.hasNext());
-        model.addAttribute("hasPrevious", page.hasPrevious());
-
-        return "main";
+        return catalogService.getItems(search, sort, pageNumber, pageSize)
+                .collectList()
+                .map(items -> {
+                    List<List<Item>> itemsGrid = splitToGrid(items, 3);
+                    return Rendering.view("main")
+                            .modelAttribute("items", itemsGrid)
+                            .modelAttribute("search", search)
+                            .modelAttribute("sort", sort)
+                            .modelAttribute("pageSize", pageSize)
+                            .modelAttribute("pageNumber", pageNumber)
+                            .modelAttribute("hasPrevious", pageNumber > 1)
+                            .modelAttribute("hasNext", items.size() == pageSize)
+                            .build();
+                });
     }
 
     @PostMapping("/{id}")
-    public String updateCart(@PathVariable Long id, @RequestParam String action) {
-        handleCartAction(id, action);
-        return "redirect:/main/items";
-    }
-
-    private void handleCartAction(Long id, String action) {
-        switch (action) {
-            case "PLUS" -> cartService.addItem(id);
-            case "MINUS" -> cartService.removeItem(id);
-            case "DELETE" -> cartService.deleteItem(id);
-        }
+    public Mono<String> updateCart(@PathVariable Long id, @RequestParam String action) {
+        return switch (action) {
+            case "PLUS" -> cartService.addItem(id).thenReturn("redirect:/main/items");
+            case "MINUS" -> cartService.removeItem(id).thenReturn("redirect:/main/items");
+            case "DELETE" -> cartService.deleteItem(id).thenReturn("redirect:/main/items");
+            default -> Mono.just("redirect:/main/items");
+        };
     }
 
     private List<List<Item>> splitToGrid(List<Item> items, int perRow) {

@@ -5,24 +5,21 @@ import com.example.intershop.repository.ItemRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.reactive.server.WebTestClient;
+import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@AutoConfigureMockMvc
+@AutoConfigureWebTestClient
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class CartIntegrationTest {
 
     @Autowired
-    private MockMvc mockMvc;
+    private WebTestClient webTestClient;
 
     @Autowired
     private ItemRepository itemRepository;
@@ -37,20 +34,27 @@ class CartIntegrationTest {
         item.setPrice(BigDecimal.valueOf(20));
         item.setCount(5);
         item.setImgPath("/img/book.jpg");
-        itemId = itemRepository.save(item).getId();
+
+        itemId = itemRepository.save(item).block().getId(); // обязательно .block() для сохранения перед тестом
     }
 
     @Test
-    void addItemToCart_thenGetCart() throws Exception {
-        mockMvc.perform(post("/cart/items/" + itemId)
-                        .param("action", "PLUS"))
-                .andExpect(status().is3xxRedirection());
+    void addItemToCart_thenGetCart() {
+        webTestClient.post()
+                .uri("/cart/items/{id}?action=PLUS", itemId)
+                .exchange()
+                .expectStatus().is3xxRedirection();
 
-        mockMvc.perform(get("/cart/items"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("cart"))
-                .andExpect(model().attributeExists("items"))
-                .andExpect(model().attribute("empty", false));
+        webTestClient.get()
+                .uri("/cart/items")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(String.class)
+                .consumeWith(response -> {
+                    String html = response.getResponseBody();
+                    assert html != null;
+                    assert html.contains("book");
+                    assert html.contains("Итого");
+                });
     }
 }
-

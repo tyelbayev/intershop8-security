@@ -2,76 +2,79 @@ package com.example.intershop.service.impl;
 
 import com.example.intershop.model.Item;
 import com.example.intershop.repository.ItemRepository;
+import com.example.intershop.service.CatalogService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.*;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
+
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class CatalogServiceImplTest {
 
-    @Mock
     private ItemRepository itemRepository;
+    private CatalogService catalogService;
 
-    private CatalogServiceImpl catalogService;
-
-    private List<Item> allItems;
+    private Item item1, item2;
 
     @BeforeEach
     void setUp() {
+        itemRepository = mock(ItemRepository.class);
         catalogService = new CatalogServiceImpl(itemRepository);
-        Item a = new Item(); a.setId(1L); a.setTitle("title1"); a.setDescription("title desc1"); a.setPrice(BigDecimal.valueOf(50));
-        Item b = new Item(); b.setId(2L); b.setTitle("title2"); b.setDescription("title desc2"); b.setPrice(BigDecimal.valueOf(30));
-        allItems = List.of(a, b);
+
+        item1 = new Item();
+        item1.setId(1L);
+        item1.setTitle("title1");
+        item1.setDescription("desc1");
+        item1.setPrice(BigDecimal.valueOf(50));
+
+        item2 = new Item();
+        item2.setId(2L);
+        item2.setTitle("title2");
+        item2.setDescription("desc2");
+        item2.setPrice(BigDecimal.valueOf(30));
     }
 
     @Test
-    void getItems_noSearch_noSort_returnsPagedList() {
-        Mockito.when(itemRepository.findAll(any(Pageable.class)))
-                .thenReturn(new PageImpl<>(allItems.subList(0, 2)));
-        Page<Item> result = catalogService.getItems("", "NO", 1, 2);
-        assertEquals(2, result.getContent().size());
+    void getItems_noSearch_shouldReturnAllItems() {
+        when(itemRepository.findAll()).thenReturn(Flux.just(item1, item2));
+
+        StepVerifier.create(catalogService.getItems("", "NO", 1, 10))
+                .expectNext(item1, item2)
+                .verifyComplete();
     }
 
     @Test
-    void getItems_searchFiltersResults() {
-        Mockito.when(itemRepository.search("title2"))
-                .thenReturn(List.of(allItems.get(1)));
-        Page<Item> result = catalogService.getItems("title2", "NO", 1, 10);
-        assertEquals(1, result.getContent().size());
-        assertEquals("title2", result.getContent().get(0).getTitle());
+    void getItems_withSearch_shouldFilter() {
+        when(itemRepository.search("title2")).thenReturn(Flux.just(item2));
+
+        StepVerifier.create(catalogService.getItems("title2", "NO", 1, 10))
+                .expectNext(item2)
+                .verifyComplete();
     }
 
     @Test
-    void getItems_sortAlpha_shouldSortByTitle() {
-        Pageable expectedPageable = PageRequest.of(0, 10, Sort.by("title"));
-        Mockito.when(itemRepository.findAll(expectedPageable))
-                .thenReturn(new PageImpl<>(allItems));
-        Page<Item> result = catalogService.getItems("", "ALPHA", 1, 10);
-        assertEquals(2, result.getContent().size());
-    }
+    void getItemById_found_shouldReturnItem() {
+        when(itemRepository.findById(1L)).thenReturn(Mono.just(item1));
 
-    @Test
-    void getItemById_existingItem_shouldReturnItem() {
-        Mockito.when(itemRepository.findById(1L)).thenReturn(Optional.of(allItems.get(0)));
-        Optional<Item> result = catalogService.getItemById(1L);
-        assertTrue(result.isPresent());
-        assertEquals("title1", result.get().getTitle());
+        StepVerifier.create(catalogService.getItemById(1L))
+                .expectNextMatches(item -> item.getTitle().equals("title1"))
+                .verifyComplete();
     }
 
     @Test
     void getItemById_notFound_shouldReturnEmpty() {
-        Mockito.when(itemRepository.findById(99L)).thenReturn(Optional.empty());
-        Optional<Item> result = catalogService.getItemById(99L);
-        assertTrue(result.isEmpty());
+        when(itemRepository.findById(99L)).thenReturn(Mono.empty());
+
+        StepVerifier.create(catalogService.getItemById(99L))
+                .verifyComplete();
     }
 }

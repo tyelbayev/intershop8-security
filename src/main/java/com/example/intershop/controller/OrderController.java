@@ -3,12 +3,11 @@ package com.example.intershop.controller;
 import com.example.intershop.model.Order;
 import com.example.intershop.service.CartService;
 import com.example.intershop.service.OrderService;
+import com.example.intershop.service.CartService.ItemWithQuantity;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.reactive.result.view.Rendering;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 
@@ -24,24 +23,30 @@ public class OrderController {
     }
 
     @PostMapping("/buy")
-    public String placeOrder() {
-        Order order = orderService.placeOrder(cartService.getItems());
-        cartService.clear();
-        return "redirect:/orders/" + order.getId() + "?newOrder=true";
+    public Mono<String> placeOrder() {
+        return cartService.getItems()
+                .collectMap(ItemWithQuantity::item, ItemWithQuantity::quantity)
+                .flatMap(orderService::placeOrder)
+                .doOnSuccess(order -> cartService.clear().subscribe()) // очищаем корзину
+                .map(order -> "redirect:/orders/" + order.getId() + "?newOrder=true");
     }
 
     @GetMapping("/orders")
-    public String getOrders(Model model) {
-        List<Order> orders = orderService.getAllOrders();
-        model.addAttribute("orders", orders);
-        return "orders";
+    public Mono<Rendering> getOrders() {
+        return orderService.getAllOrders()
+                .collectList()
+                .map(orders -> Rendering.view("orders")
+                        .modelAttribute("orders", orders)
+                        .build());
     }
 
     @GetMapping("/orders/{id}")
-    public String getOrder(@PathVariable Long id, @RequestParam(defaultValue = "false") boolean newOrder, Model model) {
-        Order order = orderService.getOrderById(id).orElseThrow();
-        model.addAttribute("order", order);
-        model.addAttribute("newOrder", newOrder);
-        return "order";
+    public Mono<Rendering> getOrder(@PathVariable Long id,
+                                    @RequestParam(defaultValue = "false") boolean newOrder) {
+        return orderService.getOrderById(id)
+                .map(order -> Rendering.view("order")
+                        .modelAttribute("order", order)
+                        .modelAttribute("newOrder", newOrder)
+                        .build());
     }
 }

@@ -2,88 +2,100 @@ package com.example.intershop.service.impl;
 
 import com.example.intershop.model.Item;
 import com.example.intershop.repository.ItemRepository;
+import com.example.intershop.service.CartService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
+
 import java.math.BigDecimal;
 import java.util.Map;
-import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class CartServiceImplTest {
 
-    @Mock
     private ItemRepository itemRepository;
-
-    private CartServiceImpl cartService;
-
+    private CartService cartService;
     private Item testItem;
 
     @BeforeEach
     void setUp() {
+        itemRepository = mock(ItemRepository.class);
         cartService = new CartServiceImpl(itemRepository);
 
         testItem = new Item();
         testItem.setId(1L);
-        testItem.setPrice(BigDecimal.valueOf(100));
         testItem.setTitle("item title");
+        testItem.setPrice(BigDecimal.valueOf(100));
     }
 
     @Test
     void addItem_shouldIncreaseQuantity() {
-        Mockito.when(itemRepository.findById(1L)).thenReturn(Optional.of(testItem));
+        when(itemRepository.findById(1L)).thenReturn(Mono.just(testItem));
 
         cartService.addItem(1L);
         cartService.addItem(1L);
 
-        Map<Item, Integer> items = cartService.getItems();
-
-        assertEquals(1, items.size());
-        assertEquals(2, items.get(testItem));
+        StepVerifier.create(cartService.getItems())
+                .expectNextMatches(map -> map.size() == 1 && map.get(testItem) == 2)
+                .verifyComplete();
     }
 
     @Test
     void removeItem_shouldDecreaseQuantityOrRemove() {
-        Mockito.when(itemRepository.findById(1L)).thenReturn(Optional.of(testItem));
+        when(itemRepository.findById(1L)).thenReturn(Mono.just(testItem));
 
         cartService.addItem(1L);
         cartService.addItem(1L);
         cartService.removeItem(1L);
 
-        Map<Item, Integer> items = cartService.getItems();
-        assertEquals(1, items.get(testItem));
+        StepVerifier.create(cartService.getItems())
+                .expectNextMatches(map -> map.get(testItem) == 1)
+                .verifyComplete();
 
         cartService.removeItem(1L);
-        assertTrue(cartService.getItems().isEmpty());
+
+        StepVerifier.create(cartService.getItems())
+                .expectNextMatches(Map::isEmpty)
+                .verifyComplete();
     }
 
     @Test
     void deleteItem_shouldCompletelyRemoveFromCart() {
         cartService.addItem(1L);
         cartService.deleteItem(1L);
-        assertTrue(cartService.getItems().isEmpty());
+
+        StepVerifier.create(cartService.getItems())
+                .expectNextMatches(Map::isEmpty)
+                .verifyComplete();
     }
 
     @Test
     void getTotal_shouldReturnCorrectSum() {
-        Mockito.when(itemRepository.findById(1L)).thenReturn(Optional.of(testItem));
+        when(itemRepository.findById(1L)).thenReturn(Mono.just(testItem));
 
         cartService.addItem(1L);
         cartService.addItem(1L);
 
-        BigDecimal total = cartService.getTotal();
-        assertEquals(BigDecimal.valueOf(200), total);
+        StepVerifier.create(cartService.getTotal())
+                .expectNext(BigDecimal.valueOf(200))
+                .verifyComplete();
     }
 
     @Test
     void clear_shouldEmptyCart() {
         cartService.addItem(1L);
         cartService.clear();
-        assertTrue(cartService.getItems().isEmpty());
+
+        StepVerifier.create(cartService.getItems())
+                .expectNextMatches(Map::isEmpty)
+                .verifyComplete();
     }
 
     @Test
@@ -93,4 +105,3 @@ class CartServiceImplTest {
         assertFalse(cartService.isEmpty());
     }
 }
-

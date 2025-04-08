@@ -2,6 +2,7 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 
 <head>
+    <meta charset="UTF-8">
     <title>Корзина товаров</title>
 </head>
 
@@ -19,25 +20,27 @@
             <table>
                 <tr>
                     <td>
-                        <img width="300" height="300" th:src="@{${entry.key.imgPath}}">
+                        <img width="300" height="300" th:src="@{${entry.item.imgPath}}"/>
                     </td>
                 </tr>
                 <tr>
                     <td>
-                        <b th:text="${entry.key.title}"></b>
+                        <b th:text="${entry.item.title}"></b>
                     </td>
                     <td>
-                        <b th:text="${entry.key.price} + ' тг.'"></b>
+                        <b th:text="${entry.item.price} + ' тг.'"></b>
                     </td>
                 </tr>
-                <tr><td th:text="${entry.key.description}"></td></tr>
+                <tr>
+                    <td th:text="${entry.item.description}"></td>
+                </tr>
                 <tr>
                     <td>
-                        <form th:action="@{'/cart/items/' + ${entry.key.id}}" method="post">
-                            <button name="action" value="minus">-</button>
-                            <span th:text="${entry.value}"></span>
-                            <button name="action" value="plus">+</button>
-                            <button name="action" value="delete" style="float:right;">&cross;</button>
+                        <form th:action="@{'/cart/items/' + ${entry.item.id}}" method="post">
+                            <button name="action" value="MINUS">-</button>
+                            <span th:text="${entry.quantity}"></span>
+                            <button name="action" value="PLUS">+</button>
+                            <button name="action" value="DELETE" style="float:right;">&cross;</button>
                         </form>
                     </td>
                 </tr>
@@ -58,5 +61,6 @@
         </td>
     </tr>
 </table>
+
 </body>
 </html>
