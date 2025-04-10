@@ -54,7 +54,7 @@ class CatalogServiceImplTest {
 
     @Test
     void getItems_withSearch_shouldFilter() {
-        when(itemRepository.search("title2")).thenReturn(Flux.just(item2));
+        when(itemRepository.findByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase("title2", "title2")).thenReturn(Flux.just(item2));
 
         StepVerifier.create(catalogService.getItems("title2", "NO", 1, 10))
                 .expectNext(item2)

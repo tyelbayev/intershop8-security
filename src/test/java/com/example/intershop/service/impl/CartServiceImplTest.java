@@ -43,7 +43,9 @@ class CartServiceImplTest {
         cartService.addItem(1L);
 
         StepVerifier.create(cartService.getItems())
-                .expectNextMatches(map -> map.size() == 1 && map.get(testItem) == 2)
+                .expectNextMatches(iq ->
+                        iq.item().equals(testItem) && iq.quantity() == 2
+                )
                 .verifyComplete();
     }
 
@@ -56,14 +58,16 @@ class CartServiceImplTest {
         cartService.removeItem(1L);
 
         StepVerifier.create(cartService.getItems())
-                .expectNextMatches(map -> map.get(testItem) == 1)
+                .expectNextMatches(iq ->
+                        iq.item().equals(testItem) && iq.quantity() == 1
+                )
                 .verifyComplete();
 
         cartService.removeItem(1L);
 
         StepVerifier.create(cartService.getItems())
-                .expectNextMatches(Map::isEmpty)
-                .verifyComplete();
+                .expectComplete()
+                .verify();
     }
 
     @Test
@@ -72,8 +76,8 @@ class CartServiceImplTest {
         cartService.deleteItem(1L);
 
         StepVerifier.create(cartService.getItems())
-                .expectNextMatches(Map::isEmpty)
-                .verifyComplete();
+                .expectComplete()
+                .verify();
     }
 
     @Test
@@ -94,14 +98,14 @@ class CartServiceImplTest {
         cartService.clear();
 
         StepVerifier.create(cartService.getItems())
-                .expectNextMatches(Map::isEmpty)
-                .verifyComplete();
+                .expectComplete()
+                .verify();
     }
 
     @Test
     void isEmpty_shouldReflectCartState() {
-        assertTrue(cartService.isEmpty());
+        assertTrue(cartService.isEmpty().block());
         cartService.addItem(1L);
-        assertFalse(cartService.isEmpty());
+        assertFalse(cartService.isEmpty().block());
     }
 }
