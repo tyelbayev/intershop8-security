@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Service
-@SessionScope
+//@SessionScope
 public class CartServiceImpl implements CartService {
 
     private final ItemRepository itemRepository;

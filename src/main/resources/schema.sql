@@ -8,7 +8,8 @@ CREATE TABLE items (
 );
 
 CREATE TABLE orders (
-                        id IDENTITY PRIMARY KEY
+                        id IDENTITY PRIMARY KEY,
+                        CREATED_AT TIMESTAMP
 );
 
 CREATE TABLE order_items (

@@ -55,11 +55,15 @@ public class OrderItem {
 
     public void setItem(Item item) {
         this.item = item;
-        this.itemId = item.getId(); // сохраняем ID отдельно
+        this.itemId = item.getId();
     }
 
     public void setOrder(Order order) {
         this.order = order;
-        this.orderId = order.getId(); // аналогично
+        this.orderId = order.getId();
+    }
+
+    public Item getItem() {
+        return item;
     }
 }

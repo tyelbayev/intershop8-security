@@ -27,7 +27,7 @@ public class OrderController {
         return cartService.getItems()
                 .collectMap(ItemWithQuantity::item, ItemWithQuantity::quantity)
                 .flatMap(orderService::placeOrder)
-                .doOnSuccess(order -> cartService.clear().subscribe()) // очищаем корзину
+                .doOnSuccess(order -> cartService.clear().subscribe())
                 .map(order -> "redirect:/orders/" + order.getId() + "?newOrder=true");
     }
 

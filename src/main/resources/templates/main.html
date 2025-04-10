@@ -71,12 +71,10 @@
                 </tr>
                 <tr>
                     <td>
-                        <form th:action="@{'/main/items/' + ${item.id}}" method="post">
-                            <button name="action" value="MINUS">-</button>
-                            <span th:text="${item.count}"></span>
-                            <button name="action" value="PLUS">+</button>
-                            <button name="action" value="PLUS" style="float:right;">В корзину</button>
-                        </form>
+                        <a th:href="@{'/main/items/' + ${item.id} + '?action=MINUS'}">-</a>
+                        <span th:text="${item.count}"></span>
+                        <a th:href="@{'/main/items/' + ${item.id} + '?action=PLUS'}">+</a>
+                        <a th:href="@{'/main/items/' + ${item.id} + '?action=ADD'}" style="float:right;">В корзину</a>
                     </td>
                 </tr>
             </table>

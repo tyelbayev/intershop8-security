@@ -47,10 +47,10 @@ public class MainController {
                 });
     }
 
-    @PostMapping("/{id}")
+    @GetMapping("/{id}")
     public Mono<String> updateCart(@PathVariable Long id, @RequestParam String action) {
         return switch (action) {
-            case "PLUS" -> cartService.addItem(id).thenReturn("redirect:/main/items");
+            case "PLUS", "ADD" -> cartService.addItem(id).thenReturn("redirect:/main/items");
             case "MINUS" -> cartService.removeItem(id).thenReturn("redirect:/main/items");
             case "DELETE" -> cartService.deleteItem(id).thenReturn("redirect:/main/items");
             default -> Mono.just("redirect:/main/items");
