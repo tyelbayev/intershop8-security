@@ -7,6 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Sort;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -54,7 +55,9 @@ class CatalogServiceImplTest {
 
     @Test
     void getItems_withSearch_shouldFilter() {
-        when(itemRepository.findByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase("title2", "title2")).thenReturn(Flux.just(item2));
+        when(itemRepository
+                .findByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase("title2", "title2", Sort.unsorted()))
+                .thenReturn(Flux.just(item2));
 
         StepVerifier.create(catalogService.getItems("title2", "NO", 1, 10))
                 .expectNext(item2)

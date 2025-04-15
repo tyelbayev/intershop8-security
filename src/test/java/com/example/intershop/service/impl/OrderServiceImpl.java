@@ -2,6 +2,7 @@ package com.example.intershop.service.impl;
 
 import com.example.intershop.model.Item;
 import com.example.intershop.model.Order;
+import com.example.intershop.repository.OrderItemRepository;
 import com.example.intershop.repository.OrderRepository;
 import com.example.intershop.service.OrderService;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,6 +25,7 @@ import static org.mockito.Mockito.*;
 class OrderServiceImplTest {
 
     private OrderRepository orderRepository;
+    private OrderItemRepository orderItemRepository;
     private OrderService orderService;
 
     private Item item;
@@ -31,7 +33,7 @@ class OrderServiceImplTest {
     @BeforeEach
     void setUp() {
         orderRepository = mock(OrderRepository.class);
-        orderService = new OrderServiceImpl(orderRepository);
+        orderService = new OrderServiceImpl(orderRepository, orderItemRepository);
 
         item = new Item();
         item.setId(1L);

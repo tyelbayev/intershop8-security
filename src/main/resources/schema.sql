@@ -9,7 +9,8 @@ CREATE TABLE items (
 
 CREATE TABLE orders (
                         id IDENTITY PRIMARY KEY,
-                        CREATED_AT TIMESTAMP
+                        CREATED_AT TIMESTAMP,
+                        TOTAL_SUM FLOAT
 );
 
 CREATE TABLE order_items (

@@ -54,13 +54,7 @@ public class Order {
     }
 
     public BigDecimal getTotalSum() {
-        return items.stream()
-                .map(orderItem -> {
-                    Item item = orderItem.getItem();
-                    if (item == null) return BigDecimal.ZERO;
-                    return item.getPrice().multiply(BigDecimal.valueOf(orderItem.getQuantity()));
-                })
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return totalSum;
     }
 
 }

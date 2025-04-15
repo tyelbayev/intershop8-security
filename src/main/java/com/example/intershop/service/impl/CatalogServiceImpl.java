@@ -3,6 +3,9 @@ package com.example.intershop.service.impl;
 import com.example.intershop.model.Item;
 import com.example.intershop.repository.ItemRepository;
 import com.example.intershop.service.CatalogService;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -20,17 +23,25 @@ public class CatalogServiceImpl implements CatalogService {
 
     @Override
     public Flux<Item> getItems(String search, String sort, int pageNumber, int pageSize) {
-        Flux<Item> source = (search == null || search.isBlank())
-                ? itemRepository.findAll()
-                : itemRepository
-                .findByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase(search, search);
+        Sort sorting = getSort(sort);
+        Pageable pageable = PageRequest.of(pageNumber - 1, pageSize, sorting);
 
-        // сортировка и пагинация — вручную (в памяти)
-        return source
-                .sort(getComparator(sort))
+        return (search == null || search.isBlank())
+                ? itemRepository.findAll(sorting).skip((long) (pageNumber - 1) * pageSize).take(pageSize)
+                : itemRepository
+                .findByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase(search, search, sorting)
                 .skip((long) (pageNumber - 1) * pageSize)
                 .take(pageSize);
     }
+
+    private Sort getSort(String sort) {
+        return switch (sort) {
+            case "ALPHA" -> Sort.by("title").ascending();
+            case "PRICE" -> Sort.by("price").ascending();
+            default -> Sort.unsorted();
+        };
+    }
+
 
     @Override
     public Mono<Item> getItemById(Long id) {
