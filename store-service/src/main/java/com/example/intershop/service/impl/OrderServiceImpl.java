@@ -1,5 +1,6 @@
 package com.example.intershop.service.impl;
 
+import com.example.intershop.client.PaymentClient;
 import com.example.intershop.model.Item;
 import com.example.intershop.model.Order;
 import com.example.intershop.model.OrderItem;
@@ -20,10 +21,12 @@ public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
+    private final PaymentClient paymentClient;
 
-    public OrderServiceImpl(OrderRepository orderRepository, OrderItemRepository orderItemRepository) {
+    public OrderServiceImpl(OrderRepository orderRepository, OrderItemRepository orderItemRepository, PaymentClient paymentClient) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
+        this.paymentClient = paymentClient;
     }
 
     @Override

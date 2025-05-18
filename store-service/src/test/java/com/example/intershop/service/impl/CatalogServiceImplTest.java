@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -21,13 +22,16 @@ class CatalogServiceImplTest {
 
     private ItemRepository itemRepository;
     private CatalogService catalogService;
+    private ReactiveRedisTemplate<String, Item> redisTemplate;
+
 
     private Item item1, item2;
 
     @BeforeEach
     void setUp() {
+        redisTemplate = mock(ReactiveRedisTemplate.class);
         itemRepository = mock(ItemRepository.class);
-        catalogService = new CatalogServiceImpl(itemRepository);
+        catalogService = new CatalogServiceImpl(itemRepository, redisTemplate);
 
         item1 = new Item();
         item1.setId(1L);

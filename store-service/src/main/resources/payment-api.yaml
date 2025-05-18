@@ -1,0 +1,57 @@
+openapi: 3.0.0
+info:
+  title: Payment Service API
+  version: 1.0.0
+paths:
+  /balance/{userId}:
+    get:
+      summary: Get user balance
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Balance returned
+          content:
+            application/json:
+              schema:
+                type: number
+                format: double
+
+  /pay:
+    post:
+      summary: Make a payment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+      responses:
+        '200':
+          description: Payment result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        '400':
+          description: Insufficient balance
+components:
+  schemas:
+    PaymentRequest:
+      type: object
+      required:
+        - userId
+        - amount
+      properties:
+        userId:
+          type: string
+        amount:
+          type: number
+          format: double
