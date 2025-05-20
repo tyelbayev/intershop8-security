@@ -23,7 +23,9 @@ public class OrderServiceImpl implements OrderService {
     private final OrderItemRepository orderItemRepository;
     private final PaymentClient paymentClient;
 
-    public OrderServiceImpl(OrderRepository orderRepository, OrderItemRepository orderItemRepository, PaymentClient paymentClient) {
+    public OrderServiceImpl(OrderRepository orderRepository,
+                            OrderItemRepository orderItemRepository,
+                            PaymentClient paymentClient) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.paymentClient = paymentClient;
@@ -32,7 +34,39 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public Mono<Order> placeOrder(Map<Item, Integer> items) {
+        String userId = "user1"; 
+
+        BigDecimal total = calculateTotal(items);
+
+        return paymentClient.getBalance(userId)
+                .flatMap(balance -> {
+                    if (BigDecimal.valueOf(balance).compareTo(total) < 0) {
+                        return Mono.error(new RuntimeException("Недостаточно средств на балансе"));
+                    }
+
+                    return createAndSaveOrder(items, total)
+                            .flatMap(savedOrder ->
+                                    paymentClient.pay(userId, total)
+                                            .flatMap(success -> {
+                                                if (success) {
+                                                    return Mono.just(savedOrder);
+                                                } else {
+                                                    return Mono.error(new RuntimeException("Ошибка при списании средств"));
+                                                }
+                                            })
+                            );
+                });
+    }
+
+    private BigDecimal calculateTotal(Map<Item, Integer> items) {
+        return items.entrySet().stream()
+                .map(e -> e.getKey().getPrice().multiply(BigDecimal.valueOf(e.getValue())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private Mono<Order> createAndSaveOrder(Map<Item, Integer> items, BigDecimal total) {
         Order order = new Order();
+        order.setTotalSum(total);
 
         List<OrderItem> orderItems = items.entrySet().stream()
                 .map(entry -> {
@@ -46,12 +80,6 @@ public class OrderServiceImpl implements OrderService {
 
         order.setItems(orderItems);
 
-        BigDecimal total = orderItems.stream()
-                .map(oi -> oi.getItem().getPrice().multiply(BigDecimal.valueOf(oi.getQuantity())))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        order.setTotalSum(total);
-        System.out.println("##order:" + order.getTotalSum());
         return orderRepository.save(order)
                 .flatMap(savedOrder -> {
                     orderItems.forEach(oi -> oi.setOrder(savedOrder));
@@ -63,8 +91,6 @@ public class OrderServiceImpl implements OrderService {
                             });
                 });
     }
-
-
 
     @Override
     public Flux<Order> getAllOrders() {

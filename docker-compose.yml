@@ -1,0 +1,31 @@
+version: "3.8"
+
+services:
+  redis:
+    image: redis:7.2
+    container_name: redis
+    ports:
+      - "6379:6379"
+
+  payment-service:
+    build:
+      context: ./payment-service
+    container_name: payment-service
+    ports:
+      - "8080:8080"
+    environment:
+      - SERVER_PORT=8080
+
+  store-service:
+    build:
+      context: ./store-service
+    container_name: store-service
+    ports:
+      - "8081:8081"
+    environment:
+      - SERVER_PORT=8081
+      - REDIS_HOST=redis
+      - PAYMENT_SERVICE_URL=http://payment-service:8080
+    depends_on:
+      - redis
+      - payment-service
