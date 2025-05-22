@@ -1,4 +1,5 @@
 FROM eclipse-temurin:21-jdk
 WORKDIR /app
-COPY store-service/target/store-service.war app.war
-ENTRYPOINT ["java", "-jar", "app.war"]
+COPY store-service/target/store-service-1.jar app.jar
+ENTRYPOINT ["java", "-jar", "app.jar"]
+
