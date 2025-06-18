@@ -31,3 +31,13 @@ services:
     depends_on:
       - redis
       - payment-service
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0
+    command: start-dev
+    ports:
+      - "8089:8080"
+    environment:
+      KC_DB: h2
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
