@@ -1,4 +1,4 @@
-CREATE TABLE items (
+CREATE TABLE if not exists items (
                        id IDENTITY PRIMARY KEY,
                        title VARCHAR(255),
                        description VARCHAR(1000),
@@ -7,13 +7,13 @@ CREATE TABLE items (
                        img_path VARCHAR(255)
 );
 
-CREATE TABLE orders (
+CREATE TABLE if not exists orders (
                         id IDENTITY PRIMARY KEY,
                         CREATED_AT TIMESTAMP,
                         TOTAL_SUM FLOAT
 );
 
-CREATE TABLE order_items (
+CREATE TABLE if not exists order_items (
                              id IDENTITY PRIMARY KEY,
                              order_id BIGINT,
                              item_id BIGINT,
