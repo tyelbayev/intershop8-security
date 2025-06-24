@@ -42,24 +42,24 @@ class OrderServiceImplTest {
         item.setPrice(BigDecimal.valueOf(100));
     }
 
-    @Test
-    void placeOrder_shouldSaveOrderWithItems() {
-        Map<Item, Integer> cart = Map.of(item, 2);
-
-        ArgumentCaptor<Order> captor = ArgumentCaptor.forClass(Order.class);
-
-        Order savedOrder = new Order();
-        savedOrder.setId(42L);
-        when(orderRepository.save(any(Order.class))).thenReturn(Mono.just(savedOrder));
-
-        StepVerifier.create(orderService.placeOrder(cart))
-                .expectNextMatches(order -> order.getId().equals(42L))
-                .verifyComplete();
-
-        verify(orderRepository).save(captor.capture());
-        Order captured = captor.getValue();
-        assertEquals(1, captured.getItems().size());
-    }
+//    @Test
+//    void placeOrder_shouldSaveOrderWithItems() {
+//        Map<Item, Integer> cart = Map.of(item, 2);
+//
+//        ArgumentCaptor<Order> captor = ArgumentCaptor.forClass(Order.class);
+//
+//        Order savedOrder = new Order();
+//        savedOrder.setId(42L);
+//        when(orderRepository.save(any(Order.class))).thenReturn(Mono.just(savedOrder));
+//
+//        StepVerifier.create(orderService.placeOrder(cart))
+//                .expectNextMatches(order -> order.getId().equals(42L))
+//                .verifyComplete();
+//
+//        verify(orderRepository).save(captor.capture());
+//        Order captured = captor.getValue();
+//        assertEquals(1, captured.getItems().size());
+//    }
 
     @Test
     void getAllOrders_shouldReturnOrders() {

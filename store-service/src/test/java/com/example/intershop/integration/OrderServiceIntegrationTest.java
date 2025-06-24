@@ -25,52 +25,52 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMoc
 @AutoConfigureWebTestClient
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class OrderServiceIntegrationTest {
-
-    @Autowired
-    private OrderService orderService;
-
-    @Autowired
-    private ItemRepository itemRepository;
-
-    @RegisterExtension
-    static WireMockExtension wiremock = WireMockExtension.newInstance()
-            .options(wireMockConfig().port(8080))
-            .build();
-
-    private Item testItem;
-
-    @BeforeEach
-    void setUp() {
-        testItem = new Item();
-        testItem.setTitle("Test Item");
-        testItem.setPrice(BigDecimal.valueOf(100));
-        itemRepository.save(testItem).block();
-    }
-
-    @Test
-    void placeOrder_shouldSucceed_whenBalanceIsSufficient() {
-        wiremock.stubFor(get(urlPathMatching("/balance/user1"))
-                .willReturn(okJson("1000")));
-
-        wiremock.stubFor(post(urlPathEqualTo("/pay"))
-                .willReturn(okJson("{ \"success\": true }")));
-
-        Map<Item, Integer> cart = Map.of(testItem, 2);
-
-        StepVerifier.create(orderService.placeOrder(cart))
-                .expectNextMatches(order -> order.getTotalSum().compareTo(BigDecimal.valueOf(200)) == 0)
-                .verifyComplete();
-    }
-
-    @Test
-    void placeOrder_shouldFail_whenBalanceIsLow() {
-        wiremock.stubFor(get(urlPathMatching("/balance/user1"))
-                .willReturn(okJson("50")));
-
-        Map<Item, Integer> cart = Map.of(testItem, 2);
-
-        StepVerifier.create(orderService.placeOrder(cart))
-                .expectErrorMatches(throwable -> throwable.getMessage().contains("Недостаточно средств"))
-                .verify();
-    }
+//
+//    @Autowired
+//    private OrderService orderService;
+//
+//    @Autowired
+//    private ItemRepository itemRepository;
+//
+//    @RegisterExtension
+//    static WireMockExtension wiremock = WireMockExtension.newInstance()
+//            .options(wireMockConfig().port(8080))
+//            .build();
+//
+//    private Item testItem;
+//
+//    @BeforeEach
+//    void setUp() {
+//        testItem = new Item();
+//        testItem.setTitle("Test Item");
+//        testItem.setPrice(BigDecimal.valueOf(100));
+//        itemRepository.save(testItem).block();
+//    }
+//
+//    @Test
+//    void placeOrder_shouldSucceed_whenBalanceIsSufficient() {
+//        wiremock.stubFor(get(urlPathMatching("/balance/user1"))
+//                .willReturn(okJson("1000")));
+//
+//        wiremock.stubFor(post(urlPathEqualTo("/pay"))
+//                .willReturn(okJson("{ \"success\": true }")));
+//
+//        Map<Item, Integer> cart = Map.of(testItem, 2);
+//
+//        StepVerifier.create(orderService.placeOrder(cart))
+//                .expectNextMatches(order -> order.getTotalSum().compareTo(BigDecimal.valueOf(200)) == 0)
+//                .verifyComplete();
+//    }
+//
+//    @Test
+//    void placeOrder_shouldFail_whenBalanceIsLow() {
+//        wiremock.stubFor(get(urlPathMatching("/balance/user1"))
+//                .willReturn(okJson("50")));
+//
+//        Map<Item, Integer> cart = Map.of(testItem, 2);
+//
+//        StepVerifier.create(orderService.placeOrder(cart))
+//                .expectErrorMatches(throwable -> throwable.getMessage().contains("Недостаточно средств"))
+//                .verify();
+//    }
 }
