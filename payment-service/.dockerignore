@@ -1,0 +1,16 @@
+**/classes
+**/maven-*
+**/surefire-reports
+**/generated-*
+**/test-classes
+**/*.iml
+**/.idea
+**/*.log
+**/.git
+**/.DS_Store
+**/.classpath
+**/.project
+**/.settings
+
+# Разрешаем JAR-файл в target/
+!target/payment-service-1.jar
