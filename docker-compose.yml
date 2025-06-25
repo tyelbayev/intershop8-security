@@ -38,6 +38,6 @@ services:
     ports:
       - "8089:8080"
     environment:
-      KC_DB: h2
+      KC_DB: dev-file
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin

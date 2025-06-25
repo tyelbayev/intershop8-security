@@ -2,10 +2,15 @@
 FROM maven:3.9.7-eclipse-temurin-21 AS builder
 WORKDIR /workspace
 
-# Сначала только POM-ы — чтобы кэшировались зависимости
-COPY pom.xml .
-COPY payment-service/pom.xml payment-service/pom.xml
-RUN mvn -B -q dependency:go-offline
+# ---------- 1-й этап: сборка ----------
+FROM maven:3.9.7-eclipse-temurin-21 AS builder
+WORKDIR /workspace
+
+# копируем ВСЁ, что нужно для payment-service
+COPY . .
+
+RUN mvn -pl payment-service -am clean package -DskipTests
+
 
 # Теперь остальные исходники
 COPY . .

@@ -1,5 +1,12 @@
+# ---------- 1-й этап: сборка ----------
+FROM maven:3.9.7-eclipse-temurin-21 AS builder
+WORKDIR /workspace
+COPY . .
+RUN mvn -pl store-service -am clean package -DskipTests
+
+# ---------- 2-й этап: рантайм ----------
 FROM eclipse-temurin:21-jdk
 WORKDIR /app
-COPY store-service/target/store-service-1.jar app.jar
-ENTRYPOINT ["java", "-jar", "app.jar"]
+COPY --from=builder /workspace/store-service/target/*.jar app.jar
 
+ENTRYPOINT ["java", "-jar", "app.jar"]
