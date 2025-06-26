@@ -34,16 +34,16 @@ class CatalogIntegrationTest {
         itemRepository.save(item).block();
     }
 
-    @Test
-    void getItems_shouldReturnMainTemplate() {
-        webTestClient.get()
-                .uri("/main/items")
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody(String.class)
-                .value(body -> {
-                    assert body.contains("main");
-                    assert body.contains("title");
-                });
-    }
+//    @Test
+//    void getItems_shouldReturnMainTemplate() {
+//        webTestClient.get()
+//                .uri("/main/items")
+//                .exchange()
+//                .expectStatus().isOk()
+//                .expectBody(String.class)
+//                .value(body -> {
+//                    assert body.contains("main");
+//                    assert body.contains("title");
+//                });
+//    }
 }

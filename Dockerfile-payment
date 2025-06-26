@@ -20,6 +20,6 @@ RUN mvn -pl payment-service -am clean package -DskipTests
 # ---------- 2-й этап: рантайм ----------
 FROM eclipse-temurin:21-jdk
 WORKDIR /app
-COPY --from=builder /workspace/payment-service/target/*.jar app.jar
+COPY --from=builder /workspace/payment-service/target/payment-service-1.jar app.jar
 
 ENTRYPOINT ["java","-jar","app.jar"]

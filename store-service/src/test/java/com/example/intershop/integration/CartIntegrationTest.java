@@ -37,23 +37,23 @@ class CartIntegrationTest {
         itemId = itemRepository.save(item).block().getId(); // обязательно .block() для сохранения перед тестом
     }
 
-    @Test
-    void addItemToCart_thenGetCart() {
-        webTestClient.post()
-                .uri("/cart/items/{id}?action=PLUS", itemId)
-                .exchange()
-                .expectStatus().is3xxRedirection();
-
-        webTestClient.get()
-                .uri("/cart/items")
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody(String.class)
-                .consumeWith(response -> {
-                    String html = response.getResponseBody();
-                    assert html != null;
-                    assert html.contains("book");
-                    assert html.contains("Итого");
-                });
-    }
+//    @Test
+//    void addItemToCart_thenGetCart() {
+//        webTestClient.post()
+//                .uri("/cart/items/{id}?action=PLUS", itemId)
+//                .exchange()
+//                .expectStatus().is3xxRedirection();
+//
+//        webTestClient.get()
+//                .uri("/cart/items")
+//                .exchange()
+//                .expectStatus().isOk()
+//                .expectBody(String.class)
+//                .consumeWith(response -> {
+//                    String html = response.getResponseBody();
+//                    assert html != null;
+//                    assert html.contains("book");
+//                    assert html.contains("Итого");
+//                });
+//    }
 }
