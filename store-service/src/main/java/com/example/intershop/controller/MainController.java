@@ -31,7 +31,9 @@ public class MainController {
             @RequestParam(defaultValue = "1") int pageNumber
     ) {
         return catalogService.getItems(search, sort, pageNumber, pageSize)
+                .doOnNext(item -> System.out.println("###Item: " + item))
                 .collectList()
+                .doOnNext(list -> System.out.println("Items count: " + list.size()))
                 .map(items -> {
                     List<List<Item>> itemsGrid = splitToGrid(items, 3);
                     return Rendering.view("main")
