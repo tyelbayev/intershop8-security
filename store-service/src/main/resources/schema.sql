@@ -10,7 +10,8 @@ CREATE TABLE if not exists items (
 CREATE TABLE if not exists orders (
                         id IDENTITY PRIMARY KEY,
                         CREATED_AT TIMESTAMP,
-                        TOTAL_SUM FLOAT
+                        TOTAL_SUM FLOAT,
+                        username VARCHAR(255)
 );
 
 CREATE TABLE if not exists order_items (

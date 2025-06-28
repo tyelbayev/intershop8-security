@@ -7,7 +7,7 @@ import reactor.core.publisher.Flux;
 
 @Repository
 public interface OrderRepository extends ReactiveCrudRepository<Order, Long> {
-    @Override
     Flux<Order> findAllByUsername(String username);
+
 }
 

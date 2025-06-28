@@ -9,39 +9,44 @@ import reactor.core.publisher.Mono;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 //@SessionScope
 public class CartServiceImpl implements CartService {
 
     private final ItemRepository itemRepository;
-    private final Map<Long, Integer> cart = new HashMap<>();
+    private final Map<String, Map<Long, Integer>> userCarts = new ConcurrentHashMap<>();
 
     public CartServiceImpl(ItemRepository itemRepository) {
         this.itemRepository = itemRepository;
     }
 
+    private Map<Long, Integer> getUserCart(String username) {
+        return userCarts.computeIfAbsent(username, u -> new ConcurrentHashMap<>());
+    }
+
     @Override
-    public Mono<Void> addItem(Long itemId) {
-        cart.merge(itemId, 1, Integer::sum);
+    public Mono<Void> addItem(String username, Long itemId) {
+        getUserCart(username).merge(itemId, 1, Integer::sum);
         return Mono.empty();
     }
 
     @Override
-    public Mono<Void> removeItem(Long itemId) {
-        cart.computeIfPresent(itemId, (id, count) -> (count > 1) ? count - 1 : null);
+    public Mono<Void> removeItem(String username, Long itemId) {
+        getUserCart(username).computeIfPresent(itemId, (id, count) -> (count > 1) ? count - 1 : null);
         return Mono.empty();
     }
 
     @Override
-    public Mono<Void> deleteItem(Long itemId) {
-        cart.remove(itemId);
+    public Mono<Void> deleteItem(String username, Long itemId) {
+        getUserCart(username).remove(itemId);
         return Mono.empty();
     }
 
     @Override
-    public Flux<ItemWithQuantity> getItems() {
-        return Flux.fromIterable(cart.entrySet())
+    public Flux<ItemWithQuantity> getItems(String username) {
+        return Flux.fromIterable(getUserCart(username).entrySet())
                 .flatMap(entry ->
                         itemRepository.findById(entry.getKey())
                                 .map(item -> new ItemWithQuantity(item, entry.getValue()))
@@ -49,20 +54,20 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public Mono<BigDecimal> getTotal() {
-        return getItems()
+    public Mono<BigDecimal> getTotal(String username) {
+        return getItems(username)
                 .map(iq -> iq.item().getPrice().multiply(BigDecimal.valueOf(iq.quantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     @Override
-    public Mono<Boolean> isEmpty() {
-        return Mono.just(cart.isEmpty());
+    public Mono<Boolean> isEmpty(String username) {
+        return Mono.just(getUserCart(username).isEmpty());
     }
 
     @Override
-    public Mono<Void> clear() {
-        cart.clear();
+    public Mono<Void> clear(String username) {
+        getUserCart(username).clear();
         return Mono.empty();
     }
 }

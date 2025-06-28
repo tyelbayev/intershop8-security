@@ -7,6 +7,10 @@ import com.example.intershop.model.OrderItem;
 import com.example.intershop.repository.OrderItemRepository;
 import com.example.intershop.repository.OrderRepository;
 import com.example.intershop.service.OrderService;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
@@ -33,20 +37,18 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public Mono<Order> placeOrder(Map<Item, Integer> items) {
-        String userId = "user1"; 
-
+    public Mono<Order> placeOrder(String username, Map<Item, Integer> items) {
         BigDecimal total = calculateTotal(items);
 
-        return paymentClient.getBalance(userId)
+        return paymentClient.getBalance(username)
                 .flatMap(balance -> {
                     if (BigDecimal.valueOf(balance).compareTo(total) < 0) {
-                        return Mono.error(new RuntimeException("Недостаточно средств на балансе"));
+                        return Mono.error(new RuntimeException("Недостаточно средств"));
                     }
 
-                    return createAndSaveOrder(items, total)
+                    return createAndSaveOrder(items, total, username)
                             .flatMap(savedOrder ->
-                                    paymentClient.pay(userId, total)
+                                    paymentClient.pay(username, total)
                                             .flatMap(success -> {
                                                 if (success) {
                                                     return Mono.just(savedOrder);
@@ -58,15 +60,18 @@ public class OrderServiceImpl implements OrderService {
                 });
     }
 
+
+
     private BigDecimal calculateTotal(Map<Item, Integer> items) {
         return items.entrySet().stream()
                 .map(e -> e.getKey().getPrice().multiply(BigDecimal.valueOf(e.getValue())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    private Mono<Order> createAndSaveOrder(Map<Item, Integer> items, BigDecimal total) {
+    private Mono<Order> createAndSaveOrder(Map<Item, Integer> items, BigDecimal total, String username) {
         Order order = new Order();
         order.setTotalSum(total);
+        order.setUsername(username);
 
         List<OrderItem> orderItems = items.entrySet().stream()
                 .map(entry -> {
@@ -93,12 +98,27 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Flux<Order> getAllOrders(String username) {
-        return orderRepository.findAllByUsername(username);
+    public Flux<Order> getAllOrders() {
+        return ReactiveSecurityContextHolder.getContext()
+                .map(SecurityContext::getAuthentication)
+                .map(Authentication::getName)
+                .flatMapMany(orderRepository::findAllByUsername);
     }
 
     @Override
     public Mono<Order> getOrderById(Long id) {
-        return orderRepository.findById(id);
+        return ReactiveSecurityContextHolder.getContext()
+                .map(SecurityContext::getAuthentication)
+                .flatMap(auth -> {
+                    String username = auth.getName();
+                    return orderRepository.findById(id)
+                            .flatMap(order -> {
+                                if (!order.getUsername().equals(username)) {
+                                    return Mono.error(new AccessDeniedException("Доступ запрещён"));
+                                }
+                                return Mono.just(order);
+                            });
+                });
     }
+
 }

@@ -3,6 +3,7 @@ package com.example.intershop.controller;
 import com.example.intershop.model.Item;
 import com.example.intershop.service.CartService;
 import com.example.intershop.service.CatalogService;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.result.view.Rendering;
@@ -50,12 +51,17 @@ public class MainController {
 
     @GetMapping("/{id}")
     public Mono<String> updateCart(@PathVariable Long id, @RequestParam String action) {
-        return switch (action) {
-            case "PLUS", "ADD" -> cartService.addItem(id).thenReturn("redirect:/main/items");
-            case "MINUS" -> cartService.removeItem(id).thenReturn("redirect:/main/items");
-            case "DELETE" -> cartService.deleteItem(id).thenReturn("redirect:/main/items");
-            default -> Mono.just("redirect:/main/items");
-        };
+        return ReactiveSecurityContextHolder.getContext()
+                .map(ctx -> ctx.getAuthentication().getName())
+                .flatMap(username -> {
+                    Mono<Void> result = switch (action) {
+                        case "PLUS", "ADD" -> cartService.addItem(username, id);
+                        case "MINUS" -> cartService.removeItem(username, id);
+                        case "DELETE" -> cartService.deleteItem(username, id);
+                        default -> Mono.empty();
+                    };
+                    return result.thenReturn("redirect:/main/items");
+                });
     }
 
     private List<List<Item>> splitToGrid(List<Item> items, int perRow) {

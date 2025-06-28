@@ -3,6 +3,7 @@ package com.example.intershop.controller;
 import com.example.intershop.service.CartService;
 import com.example.intershop.service.OrderService;
 import com.example.intershop.service.CartService.ItemWithQuantity;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.result.view.Rendering;
@@ -21,12 +22,23 @@ public class OrderController {
 
     @PostMapping("/buy")
     public Mono<String> placeOrder() {
-        return cartService.getItems()
-                .collectMap(ItemWithQuantity::item, ItemWithQuantity::quantity)
-                .flatMap(orderService::placeOrder)
-                .doOnSuccess(order -> cartService.clear().subscribe())
-                .map(order -> "redirect:/orders/" + order.getId() + "?newOrder=true");
+        return ReactiveSecurityContextHolder.getContext()
+                .map(ctx -> ctx.getAuthentication().getName())
+                .flatMap(username ->
+                        cartService.getItems(username)
+                                .collectMap(ItemWithQuantity::item, ItemWithQuantity::quantity)
+                                .flatMap(cart -> orderService.placeOrder(username, cart))
+                                .flatMap(order ->
+                                        cartService.clear(username)
+                                                .thenReturn("redirect:/orders/" + order.getId() + "?newOrder=true")
+                                )
+                )
+                .onErrorResume(ex -> {
+                    ex.printStackTrace();
+                    return Mono.just("redirect:/main/items?error=true");
+                });
     }
+
 
     @GetMapping("/orders")
     public Mono<Rendering> getOrders() {

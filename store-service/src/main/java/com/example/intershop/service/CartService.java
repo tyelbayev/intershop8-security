@@ -7,15 +7,15 @@ import reactor.core.publisher.Mono;
 import java.math.BigDecimal;
 
 public interface CartService {
+    Mono<Void> addItem(String username, Long itemId);
+    Mono<Void> removeItem(String username, Long itemId);
+    Mono<Void> deleteItem(String username, Long itemId);
 
-    Mono<Void> addItem(Long itemId);
-    Mono<Void> removeItem(Long itemId);
-    Mono<Void> deleteItem(Long itemId);
-
-    Flux<ItemWithQuantity> getItems(); // реактивный список товаров с количеством
-    Mono<BigDecimal> getTotal();
-    Mono<Boolean> isEmpty();
-    Mono<Void> clear();
+    Flux<ItemWithQuantity> getItems(String username);
+    Mono<BigDecimal> getTotal(String username);
+    Mono<Boolean> isEmpty(String username);
+    Mono<Void> clear(String username);
 
     record ItemWithQuantity(Item item, int quantity) {}
 }
+

@@ -8,7 +8,7 @@ import reactor.core.publisher.Mono;
 import java.util.Map;
 
 public interface OrderService {
-    Mono<Order> placeOrder(Map<Item, Integer> items);
+    Mono<Order> placeOrder(String username, Map<Item, Integer> items);
     Flux<Order> getAllOrders();
     Mono<Order> getOrderById(Long id);
 }

@@ -2,6 +2,7 @@ package com.example.intershop.controller;
 
 import com.example.intershop.service.CartService;
 import com.example.intershop.service.CatalogService;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.result.view.Rendering;
@@ -30,11 +31,17 @@ public class ItemController {
 
     @PostMapping("/{id}")
     public Mono<String> updateCart(@PathVariable Long id, @RequestParam String action) {
-        return switch (action) {
-            case "PLUS" -> cartService.addItem(id).thenReturn("redirect:/items/" + id);
-            case "MINUS" -> cartService.removeItem(id).thenReturn("redirect:/items/" + id);
-            case "DELETE" -> cartService.deleteItem(id).thenReturn("redirect:/items/" + id);
-            default -> Mono.just("redirect:/items/" + id);
-        };
+        return ReactiveSecurityContextHolder.getContext()
+                .map(ctx -> ctx.getAuthentication().getName())
+                .flatMap(username -> {
+                    Mono<Void> result = switch (action) {
+                        case "PLUS" -> cartService.addItem(username, id);
+                        case "MINUS" -> cartService.removeItem(username, id);
+                        case "DELETE" -> cartService.deleteItem(username, id);
+                        default -> Mono.empty();
+                    };
+                    return result.thenReturn("redirect:/items/" + id);
+                });
     }
 }
+

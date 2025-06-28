@@ -21,6 +21,7 @@ class CartServiceImplTest {
     private ItemRepository itemRepository;
     private CartService cartService;
     private Item testItem;
+    private final String user = "testuser";
 
     @BeforeEach
     void setUp() {
@@ -37,10 +38,10 @@ class CartServiceImplTest {
     void addItem_shouldIncreaseQuantity() {
         when(itemRepository.findById(1L)).thenReturn(Mono.just(testItem));
 
-        cartService.addItem(1L);
-        cartService.addItem(1L);
+        cartService.addItem(user, 1L).block();
+        cartService.addItem(user, 1L).block();
 
-        StepVerifier.create(cartService.getItems())
+        StepVerifier.create(cartService.getItems(user))
                 .expectNextMatches(iq ->
                         iq.item().equals(testItem) && iq.quantity() == 2
                 )
@@ -51,29 +52,29 @@ class CartServiceImplTest {
     void removeItem_shouldDecreaseQuantityOrRemove() {
         when(itemRepository.findById(1L)).thenReturn(Mono.just(testItem));
 
-        cartService.addItem(1L);
-        cartService.addItem(1L);
-        cartService.removeItem(1L);
+        cartService.addItem(user, 1L).block();
+        cartService.addItem(user, 1L).block();
+        cartService.removeItem(user, 1L).block();
 
-        StepVerifier.create(cartService.getItems())
+        StepVerifier.create(cartService.getItems(user))
                 .expectNextMatches(iq ->
                         iq.item().equals(testItem) && iq.quantity() == 1
                 )
                 .verifyComplete();
 
-        cartService.removeItem(1L);
+        cartService.removeItem(user, 1L).block();
 
-        StepVerifier.create(cartService.getItems())
+        StepVerifier.create(cartService.getItems(user))
                 .expectComplete()
                 .verify();
     }
 
     @Test
     void deleteItem_shouldCompletelyRemoveFromCart() {
-        cartService.addItem(1L);
-        cartService.deleteItem(1L);
+        cartService.addItem(user, 1L).block();
+        cartService.deleteItem(user, 1L).block();
 
-        StepVerifier.create(cartService.getItems())
+        StepVerifier.create(cartService.getItems(user))
                 .expectComplete()
                 .verify();
     }
@@ -82,28 +83,28 @@ class CartServiceImplTest {
     void getTotal_shouldReturnCorrectSum() {
         when(itemRepository.findById(1L)).thenReturn(Mono.just(testItem));
 
-        cartService.addItem(1L);
-        cartService.addItem(1L);
+        cartService.addItem(user, 1L).block();
+        cartService.addItem(user, 1L).block();
 
-        StepVerifier.create(cartService.getTotal())
+        StepVerifier.create(cartService.getTotal(user))
                 .expectNext(BigDecimal.valueOf(200))
                 .verifyComplete();
     }
 
     @Test
     void clear_shouldEmptyCart() {
-        cartService.addItem(1L);
-        cartService.clear();
+        cartService.addItem(user, 1L).block();
+        cartService.clear(user).block();
 
-        StepVerifier.create(cartService.getItems())
+        StepVerifier.create(cartService.getItems(user))
                 .expectComplete()
                 .verify();
     }
 
     @Test
     void isEmpty_shouldReflectCartState() {
-        assertTrue(cartService.isEmpty().block());
-        cartService.addItem(1L);
-        assertFalse(cartService.isEmpty().block());
+        assertTrue(cartService.isEmpty(user).block());
+        cartService.addItem(user, 1L).block();
+        assertFalse(cartService.isEmpty(user).block());
     }
 }
