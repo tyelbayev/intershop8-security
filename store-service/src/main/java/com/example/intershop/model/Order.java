@@ -15,6 +15,7 @@ public class Order {
     @Id
     private Long id;
 
+    private String username;
     private LocalDateTime createdAt;
 
     @Transient

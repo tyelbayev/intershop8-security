@@ -93,8 +93,8 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Flux<Order> getAllOrders() {
-        return orderRepository.findAll();
+    public Flux<Order> getAllOrders(String username) {
+        return orderRepository.findAllByUsername(username);
     }
 
     @Override
