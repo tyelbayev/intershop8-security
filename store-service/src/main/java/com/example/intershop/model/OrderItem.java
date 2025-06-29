@@ -66,4 +66,10 @@ public class OrderItem {
     public Item getItem() {
         return item;
     }
+
+    public OrderItem(Order order, Item item, Integer quantity) {
+        this.order = order;
+        this.item = item;
+        this.quantity = quantity;
+    }
 }

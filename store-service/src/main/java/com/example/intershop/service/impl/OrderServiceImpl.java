@@ -37,10 +37,11 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public Mono<Order> placeOrder(String username, Map<Item, Integer> items) {
+    public Mono<Order> placeOrder(String username, Map<Item,Integer> items) {
+
         BigDecimal total = calculateTotal(items);
 
-        return paymentClient.getBalance(username)
+        return paymentClient.getBalance(username)               // Mono<BigDecimal>
                 .flatMap(balance -> {
                     if (BigDecimal.valueOf(balance).compareTo(total) < 0) {
                         return Mono.error(new RuntimeException("Недостаточно средств"));
@@ -48,17 +49,21 @@ public class OrderServiceImpl implements OrderService {
 
                     return createAndSaveOrder(items, total, username)
                             .flatMap(savedOrder ->
-                                    paymentClient.pay(username, total)
+                                    paymentClient.pay(username, total)  // Mono<Boolean>
+                                            .defaultIfEmpty(false)          // ← на случай empty
                                             .flatMap(success -> {
-                                                if (success) {
+                                                if (Boolean.TRUE.equals(success)) {
                                                     return Mono.just(savedOrder);
-                                                } else {
-                                                    return Mono.error(new RuntimeException("Ошибка при списании средств"));
                                                 }
+                                                return Mono.error(
+                                                        new RuntimeException("Ошибка при списании средств"));
                                             })
                             );
-                });
+                })
+                .switchIfEmpty(Mono.error(
+                        new IllegalStateException("placeOrder produced empty")));
     }
+
 
 
 
@@ -68,34 +73,35 @@ public class OrderServiceImpl implements OrderService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    private Mono<Order> createAndSaveOrder(Map<Item, Integer> items, BigDecimal total, String username) {
+    private Mono<Order> createAndSaveOrder(Map<Item,Integer> items,
+                                           BigDecimal total,
+                                           String username) {
+
+        if (items.isEmpty()) {                         // пустая корзина – бизнес-ошибка
+            return Mono.error(new IllegalArgumentException("Cart is empty"));
+        }
+
         Order order = new Order();
         order.setTotalSum(total);
         order.setUsername(username);
 
-        List<OrderItem> orderItems = items.entrySet().stream()
-                .map(entry -> {
-                    OrderItem oi = new OrderItem();
-                    oi.setOrder(order);
-                    oi.setItem(entry.getKey());
-                    oi.setQuantity(entry.getValue());
-                    return oi;
-                })
-                .toList();
-
-        order.setItems(orderItems);
-
-        return orderRepository.save(order)
+        return orderRepository.save(order)             // Mono<Order>
                 .flatMap(savedOrder -> {
-                    orderItems.forEach(oi -> oi.setOrder(savedOrder));
-                    return orderItemRepository.saveAll(orderItems)
-                            .collectList()
-                            .map(savedItems -> {
-                                savedOrder.setItems(savedItems);
-                                return savedOrder;
+
+                    List<OrderItem> toPersist = items.entrySet().stream()
+                            .map(e -> new OrderItem(savedOrder, e.getKey(), e.getValue()))
+                            .toList();
+
+                    return orderItemRepository
+                            .saveAll(toPersist)            // Flux<OrderItem>
+                            .collectList()                 // Mono<List<OrderItem>>
+                            .map(list -> {
+                                savedOrder.setItems(list);
+                                return savedOrder;         // ← никогда null
                             });
                 });
     }
+
 
     @Override
     public Flux<Order> getAllOrders() {

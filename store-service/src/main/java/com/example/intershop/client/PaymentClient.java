@@ -16,13 +16,15 @@ public class PaymentClient {
 
     private final WebClient paymentWebClient;
 
-    public Mono<Double> getBalance(String userId) {
+    public Mono<Double> getBalance(String username) {
         return paymentWebClient.get()
-                .uri("/balance/{userId}", userId)
-                .accept(MediaType.APPLICATION_JSON)
+                .uri("/balances/{username}", username)
                 .retrieve()
-                .bodyToMono(Double.class);
+                .bodyToMono(Double.class)
+                .switchIfEmpty(Mono.error(new RuntimeException("User not found in balance service")));
     }
+
+
 
     public Mono<Boolean> pay(String userId, BigDecimal amount) {
         PaymentRequest request = new PaymentRequest();
