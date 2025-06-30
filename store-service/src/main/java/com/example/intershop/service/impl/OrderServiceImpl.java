@@ -7,11 +7,9 @@ import com.example.intershop.model.OrderItem;
 import com.example.intershop.repository.OrderItemRepository;
 import com.example.intershop.repository.OrderRepository;
 import com.example.intershop.service.OrderService;
+import com.example.intershop.util.CurrentUser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.ReactiveSecurityContextHolder;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
@@ -40,7 +38,6 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public Mono<Order> placeOrder(String username, Map<Item,Integer> items) {
-
         BigDecimal total = calculateTotal(items);
 
         return paymentClient.getBalance(username)
@@ -65,11 +62,7 @@ public class OrderServiceImpl implements OrderService {
                             );
                 })
                 .switchIfEmpty(Mono.error(new IllegalStateException("placeOrder produced empty")));
-
     }
-
-
-
 
     private BigDecimal calculateTotal(Map<Item, Integer> items) {
         return items.entrySet().stream()
@@ -81,7 +74,7 @@ public class OrderServiceImpl implements OrderService {
                                            BigDecimal total,
                                            String username) {
 
-        if (items.isEmpty()) {                         // пустая корзина – бизнес-ошибка
+        if (items.isEmpty()) {
             return Mono.error(new IllegalArgumentException("Cart is empty"));
         }
 
@@ -89,46 +82,38 @@ public class OrderServiceImpl implements OrderService {
         order.setTotalSum(total);
         order.setUsername(username);
 
-        return orderRepository.save(order)             // Mono<Order>
+        return orderRepository.save(order)
                 .flatMap(savedOrder -> {
-
                     List<OrderItem> toPersist = items.entrySet().stream()
                             .map(e -> new OrderItem(savedOrder, e.getKey(), e.getValue()))
                             .toList();
 
                     return orderItemRepository
-                            .saveAll(toPersist)            // Flux<OrderItem>
-                            .collectList()                 // Mono<List<OrderItem>>
+                            .saveAll(toPersist)
+                            .collectList()
                             .map(list -> {
                                 savedOrder.setItems(list);
-                                return savedOrder;         // ← никогда null
+                                return savedOrder;
                             });
                 });
     }
 
-
     @Override
     public Flux<Order> getAllOrders() {
-        return ReactiveSecurityContextHolder.getContext()
-                .map(SecurityContext::getAuthentication)
-                .map(Authentication::getName)
+        return CurrentUser.getPreferredUsername()
                 .flatMapMany(orderRepository::findAllByUsername);
     }
 
     @Override
     public Mono<Order> getOrderById(Long id) {
-        return ReactiveSecurityContextHolder.getContext()
-                .map(SecurityContext::getAuthentication)
-                .flatMap(auth -> {
-                    String username = auth.getName();
-                    return orderRepository.findById(id)
-                            .flatMap(order -> {
-                                if (!order.getUsername().equals(username)) {
-                                    return Mono.error(new AccessDeniedException("Доступ запрещён"));
-                                }
-                                return Mono.just(order);
-                            });
-                });
+        return CurrentUser.getPreferredUsername()
+                .flatMap(username ->
+                        orderRepository.findById(id)
+                                .flatMap(order -> {
+                                    if (!order.getUsername().equals(username)) {
+                                        return Mono.error(new AccessDeniedException("Доступ запрещён"));
+                                    }
+                                    return Mono.just(order);
+                                }));
     }
-
 }

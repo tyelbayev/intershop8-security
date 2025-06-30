@@ -52,17 +52,20 @@ public class MainController {
     @GetMapping("/{id}")
     public Mono<String> updateCart(@PathVariable Long id, @RequestParam String action) {
         return ReactiveSecurityContextHolder.getContext()
-                .map(ctx -> ctx.getAuthentication().getName())
+                .map(ctx -> (org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser)
+                        ctx.getAuthentication().getPrincipal())
+                .map(user -> user.getAttribute("preferred_username"))
                 .flatMap(username -> {
-                    Mono<Void> result = switch (action) {
-                        case "PLUS", "ADD" -> cartService.addItem(username, id);
-                        case "MINUS" -> cartService.removeItem(username, id);
-                        case "DELETE" -> cartService.deleteItem(username, id);
+                    Mono<Void> result = switch (action.toUpperCase()) {
+                        case "PLUS", "ADD" -> cartService.addItem(username.toString(), id);
+                        case "MINUS" -> cartService.removeItem(username.toString(), id);
+                        case "DELETE" -> cartService.deleteItem(username.toString(), id);
                         default -> Mono.empty();
                     };
                     return result.thenReturn("redirect:/main/items");
                 });
     }
+
 
     private List<List<Item>> splitToGrid(List<Item> items, int perRow) {
         List<List<Item>> grid = new ArrayList<>();

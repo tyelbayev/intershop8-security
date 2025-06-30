@@ -2,6 +2,7 @@ package com.example.intershop.service.impl;
 
 import com.example.intershop.repository.ItemRepository;
 import com.example.intershop.service.CartService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -12,6 +13,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
+@Slf4j
 //@SessionScope
 public class CartServiceImpl implements CartService {
 
@@ -23,8 +25,11 @@ public class CartServiceImpl implements CartService {
     }
 
     private Map<Long, Integer> getUserCart(String username) {
-        return userCarts.computeIfAbsent(username, u -> new ConcurrentHashMap<>());
+        Map<Long, Integer> cart = userCarts.computeIfAbsent(username, u -> new ConcurrentHashMap<>());
+        log.info("Cart for {} → {}", username, cart);
+        return cart;
     }
+
 
     @Override
     public Mono<Void> addItem(String username, Long itemId) {
@@ -46,6 +51,7 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public Flux<ItemWithQuantity> getItems(String username) {
+        log.info("getItems() for {} → {} items", username, getUserCart(username).size());
         return Flux.fromIterable(getUserCart(username).entrySet())
                 .flatMap(entry ->
                         itemRepository.findById(entry.getKey())

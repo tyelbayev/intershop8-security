@@ -2,7 +2,7 @@ package com.example.intershop.controller;
 
 import com.example.intershop.service.CartService;
 import com.example.intershop.service.CatalogService;
-import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import com.example.intershop.util.CurrentUser;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.result.view.Rendering;
@@ -31,8 +31,7 @@ public class ItemController {
 
     @PostMapping("/{id}")
     public Mono<String> updateCart(@PathVariable Long id, @RequestParam String action) {
-        return ReactiveSecurityContextHolder.getContext()
-                .map(ctx -> ctx.getAuthentication().getName())
+        return CurrentUser.getPreferredUsername()
                 .flatMap(username -> {
                     Mono<Void> result = switch (action) {
                         case "PLUS" -> cartService.addItem(username, id);
@@ -44,4 +43,3 @@ public class ItemController {
                 });
     }
 }
-

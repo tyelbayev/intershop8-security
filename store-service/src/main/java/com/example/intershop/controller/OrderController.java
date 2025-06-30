@@ -6,6 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.result.view.RedirectView;
@@ -27,50 +29,41 @@ public class OrderController {
 
     @PostMapping("/buy")
     public Mono<String> placeOrder() {
-
-        return ReactiveSecurityContextHolder.getContext()               // Mono<SecurityContext>
-                .map(ctx -> ctx.getAuthentication().getName())          // Mono<String> (username)
-                .switchIfEmpty(Mono.just("redirect:/login"))            // неавторизован – на логин
+        return ReactiveSecurityContextHolder.getContext()
+                .map(ctx -> ctx.getAuthentication().getPrincipal())
+                .cast(DefaultOidcUser.class)
+                .mapNotNull(oidcUser -> {
+                    String username = (String) oidcUser.getAttribute("preferred_username");
+                    log.info("BUY requested by username = {}", username);
+                    return username;
+                })
+                .switchIfEmpty(Mono.just("redirect:/login"))
                 .flatMap(username -> {
-
-                    // если уже redirect (строка начинается с "redirect:")
                     if (username.startsWith("redirect:")) {
                         return Mono.just(username);
                     }
-
-                    /* 1. Получаем корзину */
-                    return cartService.getItems(username)               // Flux<ItemWithQuantity>
-                            .collectMap(ItemWithQuantity::item,
-                                    ItemWithQuantity::quantity)     // Mono<Map<Item,Integer>>
+                    return cartService.getItems(username)
+                            .collectMap(ItemWithQuantity::item, ItemWithQuantity::quantity)
                             .flatMap(cart -> {
-
-                                /* 2. Пустая корзина – на список товаров */
                                 if (cart.isEmpty()) {
                                     return Mono.just("redirect:/main/items?emptyCart=true");
                                 }
-
-                                /* 3. Делаем заказ */
-                                return orderService.placeOrder(username, cart)   // Mono<Order>
+                                return orderService.placeOrder(username, cart)
                                         .flatMap(order -> {
-                                            /* 3a. Страховка от null (не должно быть) */
                                             if (order == null) {
-                                                return Mono.error(new IllegalStateException(
-                                                        "Order is null from service"));
+                                                return Mono.error(new IllegalStateException("Order is null from service"));
                                             }
-                                            /* 3b. Очищаем корзину и редиректим */
-                                            return cartService.clear(username)   // Mono<Void>
-                                                    .thenReturn("redirect:/orders/"
-                                                            + order.getId()
-                                                            + "?newOrder=true");
+                                            return cartService.clear(username)
+                                                    .thenReturn("redirect:/orders/" + order.getId() + "?newOrder=true");
                                         });
                             });
                 })
-                /* 4. Любая бизнес/системная ошибка → /main/items?error=true */
                 .onErrorResume(ex -> {
                     log.error("Place order failed", ex);
                     return Mono.just("redirect:/main/items?error=true");
                 });
     }
+
 
 
 
