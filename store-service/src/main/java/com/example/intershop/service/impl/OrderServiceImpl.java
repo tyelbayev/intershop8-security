@@ -7,6 +7,7 @@ import com.example.intershop.model.OrderItem;
 import com.example.intershop.repository.OrderItemRepository;
 import com.example.intershop.repository.OrderRepository;
 import com.example.intershop.service.OrderService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -20,6 +21,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Service
 public class OrderServiceImpl implements OrderService {
 
@@ -41,27 +43,29 @@ public class OrderServiceImpl implements OrderService {
 
         BigDecimal total = calculateTotal(items);
 
-        return paymentClient.getBalance(username)               // Mono<BigDecimal>
+        return paymentClient.getBalance(username)
+                .doOnNext(balance -> log.info("Balance for {}: {}", username, balance))
                 .flatMap(balance -> {
                     if (BigDecimal.valueOf(balance).compareTo(total) < 0) {
                         return Mono.error(new RuntimeException("Недостаточно средств"));
                     }
 
                     return createAndSaveOrder(items, total, username)
+                            .doOnNext(order -> log.info("Order created: {}", order.getId()))
                             .flatMap(savedOrder ->
-                                    paymentClient.pay(username, total)  // Mono<Boolean>
-                                            .defaultIfEmpty(false)          // ← на случай empty
+                                    paymentClient.pay(username, total)
+                                            .doOnNext(success -> log.info("Payment result: {}", success))
+                                            .defaultIfEmpty(false)
                                             .flatMap(success -> {
                                                 if (Boolean.TRUE.equals(success)) {
                                                     return Mono.just(savedOrder);
                                                 }
-                                                return Mono.error(
-                                                        new RuntimeException("Ошибка при списании средств"));
+                                                return Mono.error(new RuntimeException("Ошибка при списании средств"));
                                             })
                             );
                 })
-                .switchIfEmpty(Mono.error(
-                        new IllegalStateException("placeOrder produced empty")));
+                .switchIfEmpty(Mono.error(new IllegalStateException("placeOrder produced empty")));
+
     }
 
 

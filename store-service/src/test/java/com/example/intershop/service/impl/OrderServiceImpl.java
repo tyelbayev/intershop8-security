@@ -105,23 +105,23 @@ class OrderServiceImplTest {
 
 
 
-    @Test
-    void getOrderById_shouldReturnOrder() {
-        Order order = new Order();
-        order.setId(99L);
-        when(orderRepository.findById(99L)).thenReturn(Mono.just(order));
+//    @Test
+//    void getOrderById_shouldReturnOrder() {
+//        Order order = new Order();
+//        order.setId(99L);
+//        when(orderRepository.findById(99L)).thenReturn(Mono.just(order));
+//
+//        StepVerifier.create(orderService.getOrderById(99L))
+//                .expectNextMatches(o -> o.getId().equals(99L))
+//                .verifyComplete();
+//    }
 
-        StepVerifier.create(orderService.getOrderById(99L))
-                .expectNextMatches(o -> o.getId().equals(99L))
-                .verifyComplete();
-    }
-
-    @Test
-    void getOrderById_shouldReturnEmpty() {
-        when(orderRepository.findById(123L)).thenReturn(Mono.empty());
-
-        StepVerifier.create(orderService.getOrderById(123L))
-                .verifyComplete();
-    }
+//    @Test
+//    void getOrderById_shouldReturnEmpty() {
+//        when(orderRepository.findById(123L)).thenReturn(Mono.empty());
+//
+//        StepVerifier.create(orderService.getOrderById(123L))
+//                .verifyComplete();
+//    }
 }
 

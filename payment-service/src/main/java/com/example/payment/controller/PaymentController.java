@@ -20,14 +20,17 @@ public class PaymentController implements BalanceApi, PayApi {
     private final Map<String, BigDecimal> balances = new ConcurrentHashMap<>();
 
     public PaymentController() {
-        balances.put("user1", BigDecimal.valueOf(1000));
+        balances.put("user1", BigDecimal.valueOf(100000));
         balances.put("user2", BigDecimal.valueOf(500));
     }
 
     @Override
     public Mono<ResponseEntity<Double>> balanceUserIdGet(String userId, ServerWebExchange exchange) {
-        BigDecimal balance = balances.getOrDefault(userId, BigDecimal.ZERO);
-        return Mono.just(ResponseEntity.ok(balance.doubleValue()));
+        if (!balances.containsKey(userId)) {
+            return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+        }
+        return Mono.just(ResponseEntity.ok(balances.get(userId).doubleValue()));
+
     }
 
     @Override

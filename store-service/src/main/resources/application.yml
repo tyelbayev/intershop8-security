@@ -27,7 +27,7 @@ spring:
         registration:
           keycloak:
             client-id: store-client
-            client-secret: WfMbdYY0lOe7g9BEGUmyEM5vtagqmhAw
+            client-secret: 1ekR6iHQaKu80zWkHoL6eIgnINONphWM
             authorization-grant-type: authorization_code
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
             scope: openid
@@ -42,3 +42,5 @@ spring:
             token-uri: http://localhost:8089/realms/store-service/protocol/openid-connect/token
 server:
   port: 8080
+payment:
+  base-url: http://localhost:8081
