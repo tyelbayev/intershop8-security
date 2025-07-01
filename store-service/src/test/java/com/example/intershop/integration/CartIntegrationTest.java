@@ -9,6 +9,8 @@ import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWeb
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockOidcLogin;
+
 
 import java.math.BigDecimal;
 
@@ -25,26 +27,29 @@ class CartIntegrationTest {
 
     private Long itemId;
 
-    @BeforeEach
-    void setup() {
-        Item item = new Item();
-        item.setTitle("book");
-        item.setDescription("book1");
-        item.setPrice(BigDecimal.valueOf(20));
-        item.setCount(5);
-        item.setImgPath("/img/book.jpg");
-
-        itemId = itemRepository.save(item).block().getId(); // обязательно .block() для сохранения перед тестом
-    }
-
+//    @BeforeEach
+//    void setup() {
+//        Item item = new Item();
+//        item.setTitle("book");
+//        item.setDescription("book1");
+//        item.setPrice(BigDecimal.valueOf(20));
+//        item.setCount(5);
+//        item.setImgPath("/img/book.jpg");
+//
+//        itemId = itemRepository.save(item).block().getId();
+//    }
+//
 //    @Test
 //    void addItemToCart_thenGetCart() {
-//        webTestClient.post()
+//        WebTestClient client = webTestClient
+//                .mutateWith(mockOidcLogin().idToken(token -> token.claim("preferred_username", "user1")));
+//
+//        client.post()
 //                .uri("/cart/items/{id}?action=PLUS", itemId)
 //                .exchange()
 //                .expectStatus().is3xxRedirection();
 //
-//        webTestClient.get()
+//        client.get()
 //                .uri("/cart/items")
 //                .exchange()
 //                .expectStatus().isOk()

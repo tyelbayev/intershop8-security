@@ -3,7 +3,7 @@ package com.example.intershop.integration;
 import com.example.intershop.model.Item;
 import com.example.intershop.repository.ItemRepository;
 import com.example.intershop.service.OrderService;
-import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
+//import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -17,8 +17,8 @@ import reactor.test.StepVerifier;
 import java.math.BigDecimal;
 import java.util.Map;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+//import static com.github.tomakehurst.wiremock.client.WireMock.*;
+//import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")

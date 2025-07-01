@@ -48,25 +48,23 @@ class CatalogServiceIntegrationTest {
     void clearRedis() {
         redisTemplate.delete("item:" + item.getId()).block();
     }
+    @Test
+    void getItemById_shouldCacheInRedis() {
+        Long id = item.getId();
 
-//    @Test
-//    void getItemById_shouldCacheInRedis() throws InterruptedException {
-//        Long id = item.getId();
-//
-//        catalogService.getItemById(id)
-//                .as(StepVerifier::create)
-//                .expectNextMatches(i -> i.getTitle().equals("Cached Item"))
-//                .verifyComplete();
-//
-//        Thread.sleep(100); // иногда Redis async может не успеть
-//
-//        catalogService.getItemById(id)
-//                .as(StepVerifier::create)
-//                .expectNextMatches(i -> i.getTitle().equals("Cached Item"))
-//                .verifyComplete();
-//
-//        Mockito.verify(spyItemRepository, Mockito.times(1)).findById(id);
-//    }
+        catalogService.getItemById(id)
+                .as(StepVerifier::create)
+                .expectNextMatches(i -> i.getTitle().equals("Cached Item"))
+                .verifyComplete();
+
+        catalogService.getItemById(id)
+                .as(StepVerifier::create)
+                .expectNextMatches(i -> i.getTitle().equals("Cached Item"))
+                .verifyComplete();
+
+        Mockito.verify(spyItemRepository, Mockito.times(1)).findById(id);
+    }
+
 
 }
 

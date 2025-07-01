@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockOidcLogin;
+
 
 import java.math.BigDecimal;
 
@@ -21,22 +23,24 @@ class CatalogIntegrationTest {
     @Autowired
     private ItemRepository itemRepository;
 
-    @BeforeEach
-    void setup() {
-        itemRepository.deleteAll().block();
-
-        Item item = new Item();
-        item.setTitle("title");
-        item.setDescription("title desc");
-        item.setPrice(BigDecimal.valueOf(999));
-        item.setImgPath("/img/title.jpg");
-        item.setCount(10);
-        itemRepository.save(item).block();
-    }
-
+//    @BeforeEach
+//    void setup() {
+//        itemRepository.deleteAll().block();
+//
+//        Item item = new Item();
+//        item.setTitle("title");
+//        item.setDescription("title desc");
+//        item.setPrice(BigDecimal.valueOf(999));
+//        item.setImgPath("/img/title.jpg");
+//        item.setCount(10);
+//        itemRepository.save(item).block();
+//    }
+//
 //    @Test
 //    void getItems_shouldReturnMainTemplate() {
-//        webTestClient.get()
+//        webTestClient
+//                .mutateWith(mockOidcLogin().idToken(token -> token.claim("preferred_username", "user1")))
+//                .get()
 //                .uri("/main/items")
 //                .exchange()
 //                .expectStatus().isOk()
