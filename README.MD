@@ -1,12 +1,18 @@
 # Intershop: Витрина интернет-магазина
 
 проект на Java + Spring WebFlux. Включает витрину товаров (`store-service`) и платёжный сервис (`payment-service`) с кешированием Redis, OpenAPI-интеграцией и Docker-окружением.
-
+Дополнительно используется:
+- Redis для кеширования товаров
+- Keycloak для OpenID авторизации
+- OpenAPI для генерации клиента и сервера платёжного сервиса
+- Docker Compose для локального запуска
+- 
 ## Архитектура
 
 - `store-service` — витрина с товарами и корзиной (порт `8081`)
 - `payment-service` — сервис обработки платежей и получения баланса (порт `8080`)
 - `Redis` — кеш товаров
+- `keycloak`        Авторизация через OpenID        -8089
 
 Проект собран как мультимодульный Maven-проект с реактивным стеком.
 
@@ -29,6 +35,7 @@ docker-compose up --build
 - Витрина: http://localhost:8081/main/items
 - Redis: `localhost:6379` (в контейнере)
 - Платёжный сервис API: http://localhost:8080
+  Keycloak: http://localhost:8089 (user1 user1)
 
 ## Технологии
 
